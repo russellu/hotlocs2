@@ -12,6 +12,8 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -50,9 +52,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public TileOverlay tileOverlay;
     public boolean movedToLocation = false;
 
-    private final int UPDATE_MS = 5000;
+    private int UPDATE_MS = 5000;
 
-    private Button resetButton;
+    private Button settingsButton;
     private Button modeButton;
     private Button playPauseButton;
     private Button locateButton;
@@ -94,15 +96,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        resetButton = findViewById(R.id.resetbutton);
-        resetButton.setOnClickListener(new View.OnClickListener() {
+        settingsButton = findViewById(R.id.settingsbutton);
+        settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MapUtils.resetLocs();
-                SaveLocations.saveCurrentLocations(MapsActivity.this);
-                buildAndDisplayHeatMap();
-                tileOverlay.remove();
 
+                Intent intent = new Intent(MapsActivity.this, SettingsActivity.class);
+                MapsActivity.this.startActivity(intent);
             }
         });
 
@@ -113,7 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if(updating) {
                     timer.cancel();
-                    fusedLocationClient.removeLocationUpdates(locationCallback);
+                    stopLocationUpdates();
                     updating = false;
                     playPauseButton.setText("Updates paused");
                 }else{
@@ -180,9 +180,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             //Request location updates:
             if(fusedLocationClient == null) {
-                startLocationService();
                 startLocationUpdates();
             }
+            startLocationService();
             updateDisplay();
 
             return true;
@@ -232,6 +232,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void startLocationUpdates(){
 
+        UPDATE_MS = (60/MapUtils.updatesPerMinute)*1000;
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         createLocationRequest();
 
@@ -243,8 +245,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return;
                 }
                 for (Location location : locationResult.getLocations()) {
-                  Log.d("service","location = " + location);
-                    MapUtils.getLocs().add(new LatLng(location.getLatitude(), location.getLongitude()));
+                  Log.d("service","location = " + location +
+                          " updates per minute = " + MapUtils.updatesPerMinute);
+                    MapUtils.addPoint(new LatLng(location.getLatitude(), location.getLongitude()));
                 }
             };
         };
@@ -270,7 +273,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return this;
     }
 
+
+
     public void updateDisplay() {
+
+        if(timer!=null)
+            timer.cancel();
 
         timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -284,11 +292,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void run() {
 
-                        if(MapUtils.getLocs().size()>0) {
-                            double latitude = MapUtils.getLocs().get(MapUtils.getLocs().size()-1).latitude;
-                            double longitude = MapUtils.getLocs().get(MapUtils.getLocs().size()-1).longitude;
+                        if(MapUtils.getRawLocs().size()>0) {
+                            double latitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).latitude;
+                            double longitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).longitude;
                             updateLocation(latitude, longitude);
                             SaveLocations.saveCurrentLocations(getActivity());
+                            Log.d("service","updating map at frequency: " + (60/MapUtils.updatesPerMinute)*1000);
                         }
 
                         else{
@@ -302,7 +311,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
             }
-        }, 1000, 10000); // End of your timer code.
+        }, 1000, (60/MapUtils.updatesPerMinute)*1000); // End of your timer code.
 
     }
 
@@ -355,6 +364,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onRestoreInstanceState(savedInstanceState);
         CharSequence playPauseState = savedInstanceState.getCharSequence("playPauseState");
         playPauseButton.setText(playPauseState);
+    }
+
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        stopLocationUpdates();
+        startLocationUpdates();
+        updateDisplay();
+    }
+
+    public void stopLocationUpdates(){
+        if(fusedLocationClient!=null)
+            fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
 }

@@ -23,7 +23,7 @@ public class SaveLocations {
             listFos.close();
         }catch(Exception e){e.printStackTrace();}
 
-        Log.e("service","saved locations!");
+        Log.d("service","saved locations!");
 
     }
 

@@ -8,7 +8,8 @@ import java.util.HashSet;
 public class MapUtils {
 
     public static ArrayList<LatLng> listLatLngs = new ArrayList<>();
-    public static int displayMode = 0;
+    public static int displayMode = 1;
+    public static int updatesPerMinute = 6;
 
 
     public static void incrementDisplayMode(){
@@ -29,6 +30,10 @@ public class MapUtils {
     public static void resetLocs(){
         listLatLngs = new ArrayList<>();
 
+    }
+
+    public static void addPoint(LatLng newLatLng){
+        listLatLngs.add(newLatLng);
     }
 
     public static ArrayList<LatLng> getLocs(){

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/resetbutton"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:text="Reset locations"
+        android:textColor="#000000"
+        android:textColorHint="#00000000" />
+
+    <TextView
+        android:id="@+id/updatesperminute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Updates per minute:" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="10"
+        android:progress="3" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="(Lower values use less battery)" />
+
+
+</LinearLayout>

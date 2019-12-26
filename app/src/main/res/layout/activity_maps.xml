@@ -7,8 +7,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
     android:orientation="vertical"
     android:gravity="center">
 
@@ -30,11 +30,11 @@
         android:gravity="center">
 
         <Button
-            android:id="@+id/resetbutton"
+            android:id="@+id/settingsbutton"
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:layout_weight="1"
-            android:text="Reset locs" />
+            android:text="Settings" />
 
         <Button
             android:id="@+id/modebutton"
