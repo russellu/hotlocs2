@@ -19,6 +19,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -30,6 +32,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCyPiBFQ69cC-GIDD7YNTXKP2lEYzRK-bs"/>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5729947578110131~1768290709"/>
 
         <activity
             android:name="com.russ.locationalarm.MapsActivity"
@@ -44,6 +50,8 @@
 
         <service android:name=".LocationService"></service>
         <activity android:name=".SettingsActivity"></activity>
+        <receiver android:name=".GeofenceBroadcastReceiver"></receiver>
+
     </application>
 
 </manifest>

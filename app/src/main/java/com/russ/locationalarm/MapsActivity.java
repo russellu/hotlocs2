@@ -22,7 +22,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -61,6 +67,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +78,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         initButtons();
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+        AdView mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+        //ca-app-pub-5729947578110131~1768290709 (app id)
+        //
+        //ca-app-pub-5729947578110131/2374795369 (banner ad id)
+   //     MapUtils.setupGeofencingClient(this);
     }
 
     public void initButtons(){
@@ -206,9 +226,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         //Request location updates:
                         if(fusedLocationClient == null) {
-                            startLocationService();
                             startLocationUpdates();
                         }
+                        startLocationService();
                         updateDisplay();
                     }
 
@@ -248,6 +268,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                   Log.d("service","location = " + location +
                           " updates per minute = " + MapUtils.updatesPerMinute);
                     MapUtils.addPoint(new LatLng(location.getLatitude(), location.getLongitude()));
+                //    MapUtils.checkForStationary();
                 }
             };
         };
@@ -370,13 +391,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume(){
         super.onResume();
-        stopLocationUpdates();
-        startLocationUpdates();
-        updateDisplay();
+
+        if(updating) {
+            stopLocationUpdates();
+            startLocationUpdates();
+            startLocationService();
+            updateDisplay();
+        }
     }
 
     public void stopLocationUpdates(){
-        if(fusedLocationClient!=null)
+        if(fusedLocationClient!=null && locationCallback != null)
             fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
