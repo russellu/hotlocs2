@@ -43,5 +43,12 @@
         android:layout_height="wrap_content"
         android:text="(Lower values use less battery)" />
 
+    <Button
+        android:id="@+id/removeadsbutton"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:text="Remove ads"
+        android:textColor="#000000"
+        android:textColorHint="#00000000" />
 
 </LinearLayout>

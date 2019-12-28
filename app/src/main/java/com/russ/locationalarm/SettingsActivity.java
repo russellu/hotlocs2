@@ -24,8 +24,11 @@ public class SettingsActivity extends Activity {
     private Button resetButton;
     private SeekBar updatesPerMinuteSeekBar;
     private TextView updatesPerMinuteTextView;
+    private Button removeAdsButton;
 
     private static final int[] updatesPerMinuteValues = {1,2,3,6,8,10,12,15,20,30,60};
+
+    private Billing billing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +79,30 @@ public class SettingsActivity extends Activity {
 
         initializeSeekBarProgress();
 
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+        boolean purchased = Billing.checkPurchaseToken(this);
+        if(!purchased) {
+            MobileAds.initialize(this, new OnInitializationCompleteListener() {
+                @Override
+                public void onInitializationComplete(InitializationStatus initializationStatus) {
+                }
+            });
+            AdView mAdView = findViewById(R.id.adView);
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }
+
+        billing = new Billing(this);
+
+        removeAdsButton = findViewById(R.id.removeadsbutton);
+        removeAdsButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            public void onClick(View v) {
+                billing.initPurchase();
             }
         });
-        AdView mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
+
+
+
     }
 
 
