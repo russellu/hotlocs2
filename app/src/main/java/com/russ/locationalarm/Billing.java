@@ -13,6 +13,8 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchaseHistoryRecord;
+import com.android.billingclient.api.PurchaseHistoryResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
@@ -31,6 +33,8 @@ public class Billing implements PurchasesUpdatedListener {
     private Activity context;
     private SkuDetails skuDetails;
 
+    public static boolean adsRemoved = false;
+
     public Billing(Activity context){
         this.context = context;
 
@@ -41,6 +45,27 @@ public class Billing implements PurchasesUpdatedListener {
             public void onBillingSetupFinished(BillingResult billingResult) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     // The BillingClient is ready. You can query purchases here.
+                    Log.d("service","billing client is ready to receive sku");
+                    List<String> skuList = new ArrayList<>();
+                    skuList.add("removeads");
+                    SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
+                    params.setSkusList(skuList).setType(BillingClient.SkuType.INAPP);
+                    billingClient.querySkuDetailsAsync(params.build(),
+                            new SkuDetailsResponseListener() {
+                                @Override
+                                public void onSkuDetailsResponse(BillingResult billingResult,
+                                                                 List<SkuDetails> skuDetailsList) {
+                                    // Process the result.
+                                    Log.d("service","sku = " + billingResult);
+                                    if(skuDetailsList!= null && skuDetailsList.size() > 0) {
+                                        Log.d("service","setting sku details");
+                                        skuDetails = skuDetailsList.get(0);
+                                    }
+                                }
+                            });
+                }
+               else {
+                    billingClient.startConnection(this);
                 }
             }
             @Override
@@ -48,27 +73,12 @@ public class Billing implements PurchasesUpdatedListener {
                 // Try to restart the connection on the next request to
                 // Google Play by calling the startConnection() method.
             }
+
         });
 
 
 
-        List<String> skuList = new ArrayList<>();
-        skuList.add("removeads");
-        SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
-        params.setSkusList(skuList).setType(BillingClient.SkuType.INAPP);
-        billingClient.querySkuDetailsAsync(params.build(),
-                new SkuDetailsResponseListener() {
-                    @Override
-                    public void onSkuDetailsResponse(BillingResult billingResult,
-                                                     List<SkuDetails> skuDetailsList) {
-                        // Process the result.
-                        Log.d("service","sku = " + billingResult);
-                        if(skuDetailsList!= null && skuDetailsList.size() > 0) {
-                            Log.d("service","setting sku details");
-                            skuDetails = skuDetailsList.get(0);
-                        }
-                    }
-                });
+
 
     }
 
@@ -80,13 +90,16 @@ public class Billing implements PurchasesUpdatedListener {
 
         BillingResult responseCode = billingClient.launchBillingFlow(context, flowParams);
 
+
+
     }
+
 
     public void handlePurchase(Purchase purchase){
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
 
             // Grant entitlement to the user.
-            writePurchaseToken();
+            // writePurchaseToken();
 
             // Acknowledge the purchase if it hasn't already been acknowledged.
             if (!purchase.isAcknowledged()) {
@@ -106,6 +119,34 @@ public class Billing implements PurchasesUpdatedListener {
         }
     }
 
+    public boolean checkPurchaseToken() {
+        Purchase.PurchasesResult result = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
+        Log.d("service","purchasesresult = " +result.getPurchasesList());
+        if(result.getPurchasesList() != null && result.getPurchasesList().size() > 0){
+            adsRemoved = true;
+            return true;
+        }
+        else return false;
+    }
+
+    public void checkPurchaseTokenAsync(Context context){
+
+        PurchaseHistoryResponseListener listener = new PurchaseHistoryResponseListener() {
+            @Override
+            public void onPurchaseHistoryResponse(BillingResult billingResult, List<PurchaseHistoryRecord> list) {
+                Log.d("service","billingresult = " + billingResult);
+                if(list != null) {
+                    Log.d("service", "list size = " + list.size());
+                    adsRemoved = true;
+                }
+                else
+                    Log.d("service","purchasehistoryrecord is null");
+            }
+        };
+        billingClient.queryPurchaseHistoryAsync(BillingClient.SkuType.INAPP, listener);
+    }
+
+    /*
     public void writePurchaseToken(){
         try {
             FileOutputStream fos = context.openFileOutput("purchaseToken", Context.MODE_PRIVATE);
@@ -115,6 +156,7 @@ public class Billing implements PurchasesUpdatedListener {
             fos.close();
         }catch(Exception e){e.printStackTrace();}
     }
+
 
     public static boolean checkPurchaseToken(Context context){
 
@@ -131,6 +173,9 @@ public class Billing implements PurchasesUpdatedListener {
 
         return tokenPurchased;
     }
+     */
+
+
 
     @Override
     public void onPurchasesUpdated(BillingResult billingResult, @Nullable List<Purchase> list) {

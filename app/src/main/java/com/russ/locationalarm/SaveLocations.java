@@ -18,7 +18,7 @@ public class SaveLocations {
         try {
             FileOutputStream listFos = mapsActivity.getActivity().openFileOutput("savedLocations", Context.MODE_PRIVATE);
             ObjectOutputStream listOs = new ObjectOutputStream(listFos);
-            listOs.writeObject(latLngToSerialLatLng(MapUtils.getRawLocs()));
+            listOs.writeObject(MapUtils.getRawLocs());
             listOs.close();
             listFos.close();
         }catch(Exception e){e.printStackTrace();}
@@ -27,16 +27,16 @@ public class SaveLocations {
 
     }
 
-    public static ArrayList<LatLng> getSavedLocations(MapsActivity mapsActivity) {
+    public static ArrayList<SerialLocation> getSavedLocations(MapsActivity mapsActivity) {
 
         Log.e("service","getting locations!");
 
-        ArrayList<SerialLatLng> loadedLatLngs = null;
+        ArrayList<SerialLocation> loadedLocations = null;
 
         try {
             FileInputStream listFis = mapsActivity.getActivity().openFileInput("savedLocations");
             ObjectInputStream listIs = new ObjectInputStream(listFis);
-            loadedLatLngs = (ArrayList<SerialLatLng>) listIs.readObject();
+            loadedLocations = (ArrayList<SerialLocation>) listIs.readObject();
             listIs.close();
             listFis.close();
 
@@ -44,30 +44,27 @@ public class SaveLocations {
             e.printStackTrace();
         }
 
-
-
-        if(loadedLatLngs != null)
-            return serialLatLngToLatLng(loadedLatLngs);
+        if(loadedLocations != null)
+            return loadedLocations;
         else
             return null;
-
     }
 
-
-    public static ArrayList<LatLng> serialLatLngToLatLng(ArrayList<SerialLatLng> serialLatLngs){
+    /*
+    public static ArrayList<LatLng> serialLatLngToLatLng(ArrayList<SerialLocation> serialLatLngs){
         ArrayList<LatLng> latLngs = new ArrayList<>();
-        for(SerialLatLng serialLatLng: serialLatLngs)
+        for(SerialLocation serialLatLng: serialLatLngs)
             latLngs.add(new LatLng(serialLatLng.getLatitude(),serialLatLng.getLongitude()));
 
         return latLngs;
     }
 
-    public static ArrayList<SerialLatLng> latLngToSerialLatLng(ArrayList<LatLng> latLngs){
-        ArrayList<SerialLatLng> serialLatLngs = new ArrayList<>();
+    public static ArrayList<SerialLocation> latLngToSerialLatLng(ArrayList<LatLng> latLngs){
+        ArrayList<SerialLocation> serialLatLngs = new ArrayList<>();
         for(LatLng latLng: latLngs)
-            serialLatLngs.add(new SerialLatLng(latLng.latitude,latLng.longitude));
+            serialLatLngs.add(new SerialLocation(latLng.latitude,latLng.longitude));
 
         return serialLatLngs;
     }
-
+*/
 }

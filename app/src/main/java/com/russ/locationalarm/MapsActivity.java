@@ -2,8 +2,6 @@ package com.russ.locationalarm;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,11 +9,12 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.text.InputType;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -28,7 +27,6 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -42,8 +40,8 @@ import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -54,6 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static FusedLocationProviderClient fusedLocationClient;
     private static Timer timer;
     private static boolean updating = true;
+    private static int timerCounter = 0;
 
     public TileOverlay tileOverlay;
     public boolean movedToLocation = false;
@@ -64,10 +63,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button modeButton;
     private Button playPauseButton;
     private Button locateButton;
+    private Button myLocsButton;
+
+    private TextView latLngTextView;
+    private TextView currentLocationTextView;
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
-
+    private Billing billing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,9 +81,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         initButtons();
+        initTextViews();
 
-        boolean purchased = Billing.checkPurchaseToken(this);
-        if(!purchased) {
+   //     billing = new Billing(this);
+   //     billing.checkPurchaseTokenAsync(this);
+    //    boolean purchased = billing.checkPurchaseToken();
+
+       // if(!purchased && !Billing.adsRemoved) {
             MobileAds.initialize(this, new OnInitializationCompleteListener() {
                 @Override
                 public void onInitializationComplete(InitializationStatus initializationStatus) {
@@ -89,11 +96,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             AdView mAdView = findViewById(R.id.adView);
             AdRequest adRequest = new AdRequest.Builder().build();
             mAdView.loadAd(adRequest);
+      /*
         }
-        //ca-app-pub-5729947578110131~1768290709 (app id)
-        //
-        //ca-app-pub-5729947578110131/2374795369 (banner ad id)
-   //     MapUtils.setupGeofencingClient(this);
+        else{
+            AdView mAdView = findViewById(R.id.adView);
+            mAdView.setVisibility(View.GONE);
+        }
+        */
+
+    }
+
+    public void initTextViews(){
+        latLngTextView = findViewById(R.id.latlngtextview);
+        currentLocationTextView = findViewById(R.id.currentlocationtextview);
     }
 
     public void initButtons(){
@@ -148,6 +163,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+
+        myLocsButton = findViewById(R.id.mylocsbutton);
+        myLocsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MapsActivity.this, LocationHistory.class);
+                MapsActivity.this.startActivity(intent);
+            }
+        });
+
     }
 
     @Override
@@ -155,10 +180,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         initializeSavedData();
         checkLocationPermission();
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(final LatLng latLng) {
+                Log.d("service","onmaplongclick latlng = " + latLng);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+                builder.setTitle("Title for new location");
+                final EditText input = new EditText(MapsActivity.this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String locationName = input.getText().toString();
+                        LocationHistory.addLocale(locationName, latLng);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            }
+        });
+
     }
 
     public void initializeSavedData(){
-        ArrayList<LatLng> loaded = SaveLocations.getSavedLocations(this);
+
+        ArrayList<SerialLocation> loaded = SaveLocations.getSavedLocations(this);
+
         if(loaded != null) {
             MapUtils.setLocs(loaded);
             updateLocation(MapUtils.getLocs().get(MapUtils.getLocs().size()-1).latitude,
@@ -269,9 +324,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return;
                 }
                 for (Location location : locationResult.getLocations()) {
+
+
                   Log.d("service","location = " + location +
-                          " updates per minute = " + MapUtils.updatesPerMinute);
-                    MapUtils.addPoint(new LatLng(location.getLatitude(), location.getLongitude()));
+                          " updates per minute = " + MapUtils.updatesPerMinute + " accuracy = " + location.getAccuracy());
+                    MapUtils.addPoint(location.getLatitude(),
+                                      location.getLongitude(),
+                                      location.getAccuracy(),
+                                      location.getTime());
+
+                    double lat = location.getLatitude();
+                    double lng = location.getLongitude();
+                    DecimalFormat df = new DecimalFormat();
+                    df.setMaximumFractionDigits(5);
+                    latLngTextView.setText("Lat: " + df.format(lat)+", Lng: " + df.format(lng));
+
                 //    MapUtils.checkForStationary();
                 }
             };
@@ -292,6 +359,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mLocationRequest.setFastestInterval(UPDATE_MS);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setMaxWaitTime(UPDATE_MS);
+
+
+
     }
 
     public MapsActivity getActivity(){
@@ -318,13 +388,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void run() {
 
                         if(MapUtils.getRawLocs().size()>0) {
-                            double latitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).latitude;
-                            double longitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).longitude;
+                            double latitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).getLatitude();
+                            double longitude = MapUtils.getRawLocs().get(MapUtils.getRawLocs().size()-1).getLongitude();
                             updateLocation(latitude, longitude);
-                            SaveLocations.saveCurrentLocations(getActivity());
                             Log.d("service","updating map at frequency: " + (60/MapUtils.updatesPerMinute)*1000);
+                            if(timerCounter%50 == 0)
+                                SaveLocations.saveCurrentLocations(getActivity());
                         }
-
                         else{
                             //show a toast that says waiting for first location update.
                             Context context = getApplicationContext();
@@ -341,8 +411,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void updateLocation(double latitude, double longitude){
-
-
         if(!movedToLocation){
             moveToCurrentLocation(latitude,longitude);
             movedToLocation = true;

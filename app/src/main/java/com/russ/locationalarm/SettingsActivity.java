@@ -17,7 +17,6 @@ import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class SettingsActivity extends Activity {
 
@@ -25,6 +24,8 @@ public class SettingsActivity extends Activity {
     private SeekBar updatesPerMinuteSeekBar;
     private TextView updatesPerMinuteTextView;
     private Button removeAdsButton;
+    private TextView accuracyTextView;
+    private SeekBar accuracySeekBar;
 
     private static final int[] updatesPerMinuteValues = {1,2,3,6,8,10,12,15,20,30,60};
 
@@ -58,7 +59,7 @@ public class SettingsActivity extends Activity {
         updatesPerMinuteTextView = findViewById(R.id.updatesperminute);
         updatesPerMinuteTextView.setText("Updates per minute: " + MapUtils.updatesPerMinute);
 
-        updatesPerMinuteSeekBar = findViewById(R.id.seekBar);
+        updatesPerMinuteSeekBar = findViewById(R.id.updatesperminuteseekbar);
         updatesPerMinuteSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -79,8 +80,35 @@ public class SettingsActivity extends Activity {
 
         initializeSeekBarProgress();
 
-        boolean purchased = Billing.checkPurchaseToken(this);
-        if(!purchased) {
+        accuracyTextView = findViewById(R.id.accuracytextview);
+        accuracyTextView.setText("Minimum accuracy: " + MapUtils.minAccuracy);
+
+        accuracySeekBar = findViewById(R.id.accuracyseekbar);
+        accuracySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                accuracyTextView.setText("Minimum accuracy: " + progress);
+                MapUtils.minAccuracy = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        accuracySeekBar.setProgress(MapUtils.minAccuracy);
+
+
+       // billing = new Billing(this);
+       // billing.checkPurchaseTokenAsync(this);
+       // boolean purchased = billing.checkPurchaseToken();
+
+        //if(!purchased && !Billing.adsRemoved) {
             MobileAds.initialize(this, new OnInitializationCompleteListener() {
                 @Override
                 public void onInitializationComplete(InitializationStatus initializationStatus) {
@@ -89,19 +117,14 @@ public class SettingsActivity extends Activity {
             AdView mAdView = findViewById(R.id.adView);
             AdRequest adRequest = new AdRequest.Builder().build();
             mAdView.loadAd(adRequest);
+      /*
         }
-
-        billing = new Billing(this);
-
-        removeAdsButton = findViewById(R.id.removeadsbutton);
-        removeAdsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                billing.initPurchase();
-            }
-        });
-
-
+        else{
+            AdView mAdView = findViewById(R.id.adView);
+            mAdView.setVisibility(View.GONE);
+            removeAdsButton.setVisibility(View.GONE);
+        }
+*/
 
     }
 

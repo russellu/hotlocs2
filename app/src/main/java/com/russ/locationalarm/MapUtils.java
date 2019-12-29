@@ -21,106 +21,111 @@ import java.util.Map;
 
 public class MapUtils {
 
-    public static ArrayList<ArrayList<LatLng>> listLatLngs = new ArrayList<ArrayList<LatLng>>(){{
-                    add(new ArrayList<LatLng>());
-                    add(new ArrayList<LatLng>());
-                    add(new ArrayList<LatLng>());
-                    add(new ArrayList<LatLng>());
+    public static ArrayList<SerialLocation> rawLocations = new ArrayList<>();
+
+    public static ArrayList<HashSet<SerialLocation>> listLocations = new ArrayList<HashSet<SerialLocation>>(){{
+                    add(new HashSet<SerialLocation>());
+                    add(new HashSet<SerialLocation>());
+                    add(new HashSet<SerialLocation>());
+                    add(new HashSet<SerialLocation>());
                 }};
 
-    public static ArrayList<LatLng> rawLatLngs = new ArrayList<LatLng>();
-    public static int displayMode = 1;
-    public static int updatesPerMinute = 3;
-    public static int[] precisionConstants = {0,300000,30000,10000};
+    public static int displayMode = 0;
+    public static int updatesPerMinute = 6;
+    public static int[] precisionConstants = {200000,80000,10000};
+    public static int minAccuracy = 20;
 
-    private static GeofencingClient geofencingClient;
-    private static ArrayList<Geofence> geofences = new ArrayList<>();
+    /*
+        private static GeofencingClient geofencingClient;
+        private static ArrayList<Geofence> geofences = new ArrayList<>();
 
-    private static Context context;
-/*
+        private static Ctext context;
 
-    public static void setupGeofencingClient(Context context){
-        geofencingClient = LocationServices.getGeofencingClient(context);
-        MapUtils.context = context;
-    }
+        public static void setupGeofencingClient(Context context){
+            geofencingClient = LocationServices.getGeofencingClient(context);
+            MapUtils.context = context;
+        }
 
-    private static PendingIntent geofencePendingIntent;
-    private static PendingIntent getGeofencePendingIntent() {
-        // Reuse the PendingIntent if we already have it.
+        private static PendingIntent geofencePendingIntent;
+        private static PendingIntent getGeofencePendingIntent() {
+            // Reuse the PendingIntent if we already have it.
 
-        Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-        // calling addGeofences() and removeGeofences().
-        geofencePendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        return geofencePendingIntent;
-    }
+            Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
+            // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
+            // calling addGeofences() and removeGeofences().
+            geofencePendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return geofencePendingIntent;
+        }
 
-    private static GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-        builder.addGeofences(geofences);
-        return builder.build();
-    }
+        private static GeofencingRequest getGeofencingRequest() {
+            GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+            builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+            builder.addGeofences(geofences);
+            return builder.build();
+        }
 
-    public static void setupGeofenceOnCurrentLocation(LatLng currentLocation){
-        String key = "geofencekey";
-        geofences.add(new Geofence.Builder()
-                // Set the request ID of the geofence. This is a string to identify this
-                // geofence.
-                .setRequestId(key)
-                .setCircularRegion(
-                        currentLocation.latitude,
-                        currentLocation.longitude,
-                        1
-                )
-                .setExpirationDuration(600*1000)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_ENTER)
-                .setNotificationResponsiveness(1000)
-                .build());
+        public static void setupGeofenceOnCurrentLocation(LatLng currentLocation){
+            String key = "geofencekey";
+            geofences.add(new Geofence.Builder()
+                    // Set the request ID of the geofence. This is a string to identify this
+                    // geofence.
+                    .setRequestId(key)
+                    .setCircularRegion(
+                            currentLocation.latitude,
+                            currentLocation.longitude,
+                            1
+                    )
+                    .setExpirationDuration(600*1000)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .setNotificationResponsiveness(1000)
+                    .build());
 
 
-        geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("service","SUCCESSFULLY added geofence!");
-                        // Geofences added
-                        // ...
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // Failed to add geofences
-                        // ...
-                    }
-                });
-    }
-*/
+            geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d("service","SUCCESSFULLY added geofence!");
+                            // Geofences added
+                            // ...
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            // Failed to add geofences
+                            // ...
+                        }
+                    });
+        }
+    */
+
     public static void incrementDisplayMode(){
         displayMode++;
-        if(displayMode>3){
+        if(displayMode>2){
             displayMode = 0;
         }
     }
 
-    public static ArrayList<LatLng> getRawLocs(){
-        return rawLatLngs;
+    public static ArrayList<SerialLocation> getRawLocs(){
+        return rawLocations;
     }
 
-    public static void setLocs(ArrayList<LatLng> locs){
-        for(int i=0;i<locs.size();i++) {
-            addPoint(locs.get(i));
+    public static void setLocs(ArrayList<SerialLocation> serialLocations){
+
+        resetLocs();
+        Log.d("service","serialLocationSize = " + serialLocations.size());
+        for(SerialLocation loc: serialLocations) {
+            addPoint(loc.getLatitude(), loc.getLongitude(), loc.getAccuracy(), loc.getUTCTime());
         }
     }
 
     public static void resetLocs(){
-        rawLatLngs = new ArrayList<>();
-        listLatLngs = new ArrayList<ArrayList<LatLng>>(){{
-            add(new ArrayList<LatLng>());
-            add(new ArrayList<LatLng>());
-            add(new ArrayList<LatLng>());
-            add(new ArrayList<LatLng>());
+        rawLocations = new ArrayList<>();
+        listLocations = new ArrayList<HashSet<SerialLocation>>(){{
+            add(new HashSet<SerialLocation>());
+            add(new HashSet<SerialLocation>());
+            add(new HashSet<SerialLocation>());
         }};
     }
 
@@ -154,65 +159,33 @@ public class MapUtils {
         }
     }
 */
-    public static void addPoint(LatLng newLatLng){
+    public static void addPoint(double latitude, double longitude, double accuracy, long UTCTime){
 
-        rawLatLngs.add(newLatLng);
 
+        rawLocations.add(new SerialLocation(latitude,longitude,accuracy,UTCTime));
         for(int i=0;i<precisionConstants.length;i++) {
-            int tempLat = (int) (newLatLng.latitude * precisionConstants[i]);
-            int tempLng = (int) (newLatLng.longitude * precisionConstants[i]);
+
+            int tempLat = (int) (latitude * precisionConstants[i]);
+            int tempLng = (int) (longitude * precisionConstants[i]);
+
             LatLng tempLatLng = new LatLng((float) tempLat / precisionConstants[i],
                     (float) tempLng / precisionConstants[i]);
 
-            if(!listLatLngs.get(i).contains(tempLatLng))
-                listLatLngs.get(i).add(tempLatLng);
+            if(!listLocations.get(i).contains(tempLatLng))
+                listLocations.get(i).add(new SerialLocation(tempLatLng.latitude,
+                                                            tempLatLng.longitude,
+                                                            accuracy,
+                                                            UTCTime));
         }
-
-
     }
 
     public static ArrayList<LatLng> getLocs(){
-
-        if(displayMode==0)
-            return rawLatLngs;
-        else
-            return listLatLngs.get(displayMode);
+        ArrayList<LatLng> locs = new ArrayList<>();
+        for(SerialLocation loc: listLocations.get(displayMode))
+            if(loc.getAccuracy() < minAccuracy)
+                locs.add(new LatLng(loc.getLatitude(),
+                                    loc.getLongitude()));
+        return locs;
     }
-
-    /*
-    public static ArrayList<LatLng> getLocs(){
-
-        if(displayMode == 1){
-            return clusterReduce(listLatLngs,300000);
-        }
-        else if(displayMode == 2){
-            return clusterReduce(listLatLngs, 30000);
-        }
-        else if(displayMode == 3){
-            return clusterReduce(listLatLngs, 3000);
-        }
-        else
-            return listLatLngs;
-    }
-*/
-    /*
-    public static ArrayList<LatLng> clusterReduce(ArrayList<LatLng> allPoints, int precision){
-        ArrayList<LatLng> reducedPoints = new ArrayList<LatLng>();
-        HashSet<LatLng> hashedPoints = new HashSet<>();
-
-        for(int i=0;i<allPoints.size();i++){
-            int tempLat = (int)(allPoints.get(i).latitude*precision);
-            int tempLng = (int)(allPoints.get(i).longitude*precision);
-            LatLng tempLatLng = new LatLng((float)tempLat/precision,(float)tempLng/precision);
-            //if(!reducedPoints.contains(tempLatLng))
-            //    reducedPoints.add(tempLatLng);
-            if(hashedPoints.add(tempLatLng))
-                reducedPoints.add(tempLatLng);
-        }
-
-        return  reducedPoints;
-    }
-
-*/
 
 }

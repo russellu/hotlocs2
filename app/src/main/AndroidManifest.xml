@@ -52,8 +52,7 @@
 
         <service android:name=".LocationService"></service>
         <activity android:name=".SettingsActivity"></activity>
-        <receiver android:name=".GeofenceBroadcastReceiver"></receiver>
-
+        <activity android:name=".LocationHistory"></activity>
     </application>
 
 </manifest>
